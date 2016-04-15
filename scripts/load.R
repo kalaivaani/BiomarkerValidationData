@@ -6,3 +6,19 @@
 # LEAP BL and 3m survey data from DADOS
 
 ########################### load.R: load raw data ###############################
+
+# serum data
+Serum <- read.csv("raw_data/SerumData.csv", stringsAsFactors=FALSE)
+
+# SF data
+SF <- read.csv("raw_data/SFData.csv", stringsAsFactors=FALSE)
+
+# biobank master list
+BioMaster <- read.csv("raw_data/BiobankKneeMaster.csv", stringsAsFactors=FALSE)
+
+# biobank data
+Bio_BL <- read.csv("raw_data/BiobankKneeBL.csv", stringsAsFactors=FALSE)
+Bio_3m <- read.csv("raw_data/BiobankKnee3m.csv", stringsAsFactors=FALSE)
+
+# DADOS data
+LEAPKnee <- read.csv("raw_data/LEAP_Knee.csv", stringsAsFactors=FALSE)
