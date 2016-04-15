@@ -10,7 +10,10 @@
 rm(list = ls())
 library(plyr)
 library(lubridate)
+
+# load functions
 source("Y:/LEAP/23. LEAP OA Data Quality/scripts/functions.R")
+source("scripts/functions.R")
 
 # load data
 source("scripts/load.R")
