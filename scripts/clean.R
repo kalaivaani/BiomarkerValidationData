@@ -37,7 +37,7 @@ LEAP_3m[,grep("DOB$|DOE$|DOC$", names(LEAP_3m))] <- lapply(LEAP_3m[,grep("DOB$|D
 LEAP_BL <- remove_prefixes(LEAP_BL)
 LEAP_3m <- remove_prefixes(LEAP_3m)
 
-#### LEAP BL calculations ####
+########################### LEAP BL calculations ##############################
 # calculate baseline age
 LEAP_BL$BASELINE_AGE <- interval(LEAP_BL$DOB, LEAP_BL$DOE)/years(1)
 LEAP_BL$BASELINE_AGE[LEAP_BL$BASELINE_AGE>100 | LEAP_BL$BASELINE_AGE < 16] <- NA
@@ -52,7 +52,7 @@ colnames(BL_WOMAC) <- paste0("BASELINE_", colnames(BL_WOMAC))
 
 LEAP_BL <- cbind(LEAP_BL, HWBMI, BL_WOMAC)
 
-#### LEAP 3m calculations #####
+######################## LEAP 3m calculations #################################
 # calculate 3m WOMAC
 x3m_WOMAC <- WOMACscoring(LEAP_3m[,grep("KOOS", names(LEAP_3m))])
 colnames(x3m_WOMAC) <- paste0("3MONTH_", colnames(x3m_WOMAC))
@@ -60,6 +60,62 @@ colnames(x3m_WOMAC) <- paste0("3MONTH_", colnames(x3m_WOMAC))
 LEAP_3m <- cbind(LEAP_3m, x3m_WOMAC)
 
 
-##### LEAP BL dataset ######
+######################## LEAP BL dataset #######################################
 # subject ID, age, sex, baseline DOC (expectation), BASELINE_ETHNIC --> BASELINE_EMPLOYMENT_OTHER
-BLdata <- LEAP_BL[,c("SUBJECT_ID")]
+BLdata <- LEAP_BL[c("SUBJECT_ID", "GENDER", "BASELINE_AGE","BASELINE_EXPECTATIONDOC")]
+names(BLdata)[names(BLdata)=="BASELINE_EXPECTATIONDOC"] <- "BASELINE_DOC"
+
+# add demographics
+BLdata <- cbind(BLdata, LEAP_BL[,grep("BASELINE_ETHNIC", names(LEAP_BL)):grep("BASELINE_EMPLOYMENT_OTHER", names(LEAP_BL))])
+
+# add height, weight, BMI
+BLdata <- cbind(BLdata, HWBMI)
+
+# add CHA + smoking
+BLdata <- cbind(BLdata, LEAP_BL[,grep("CHA1A", names(LEAP_BL)):grep("SMOKING", names(LEAP_BL))])
+
+# add PCS scores
+BLdata <- cbind(BLdata, LEAP_BL[,grep("BASELINE_RUMINATION", names(LEAP_BL)):grep("BASELINE_PCSTOTAL", names(LEAP_BL))])
+
+# add expectations
+BLdata <- cbind(BLdata, LEAP_BL[,grep("BASELINE_EXPECTATION1", names(LEAP_BL)):grep("BASELINE_EXPECTATION8", names(LEAP_BL))])
+
+# add homunculus count, waist, hip, algometer variables (all blank)
+BLdata[,c("BASELINE_HOMUNC_COUNT","BASELINE_CLINICAL_WAIST","BASELINE_CLINICAL_HIP",
+          "BASELINE_CLINICAL_PAIN_FOREARM","BASELINE_CLINICAL_PAIN_LST","BASELINE_CLINICAL_PAIN_LJL","BASELINE_CLINICAL_PAIN_MJL",
+          "BASELINE_CLINICAL_PAIN_MST")] <- NA
+
+# add SF-12 scores
+BLdata <- cbind(BLdata, LEAP_BL[,grep("BASELINE_SF12BP", names(LEAP_BL)):grep("BASELINE_SF12PCS", names(LEAP_BL))])
+
+# add KOOS scores
+BLdata <- cbind(BLdata, LEAP_BL[,grep("BASELINE_SYMPTOMSCORE", names(LEAP_BL)):grep("BASELINE_QOLSCORE", names(LEAP_BL))])
+
+# add WOMAC scores
+BLdata <- cbind(BLdata, BL_WOMAC)
+
+
+################################ LEAP 3m dataset ########################################
+x3mdata <- LEAP_3m[,c("SUBJECT_ID","3MONTH_SATISDOC")]
+names(x3mdata)[names(x3mdata)=="3MONTH_SATISDOC"] <- "3MONTH_DOC"
+
+# SF-12 scores
+x3mdata <- cbind(x3mdata, LEAP_3m[,grep("3MONTH_SF12BP", names(LEAP_3m)):grep("3MONTH_SF12PCS", names(LEAP_3m))])
+
+# KOOS scores
+x3mdata <- cbind(x3mdata, LEAP_3m[,grep("3MONTH_SYMPTOMSCORE", names(LEAP_3m)):grep("3MONTH_QOLSCORE", names(LEAP_3m))])
+
+# WOMAC scores
+x3mdata <- cbind(x3mdata, x3m_WOMAC)
+
+# satisfaction
+x3mdata <- cbind(x3mdata, LEAP_3m[,grep("3MONTH_SATISFACTION1", names(LEAP_3m)):grep("3MONTH_SATISFACTION3C", names(LEAP_3m))])
+
+
+########################### merge LEAP data ############################################
+LEAPdata <- merge(BLdata, x3mdata, by="SUBJECT_ID", all=T)
+
+########################### merge biomarker and LEAP data ##################################
+biomarkers <- merge(biomarkers, LEAPdata, by.x="LEAP.ID", by.y="SUBJECT_ID", all.x=TRUE, all.y=FALSE)
+
+write.csv(biomarkers, file="processed_data/biomarkers_LEAP.csv", row.names=F, na="")
