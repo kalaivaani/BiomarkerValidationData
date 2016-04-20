@@ -21,4 +21,6 @@ Bio_BL <- read.csv("raw_data/BiobankKneeBL.csv", stringsAsFactors=FALSE)
 Bio_3m <- read.csv("raw_data/BiobankKnee3m.csv", stringsAsFactors=FALSE)
 
 # DADOS data
-LEAPKnee <- read.csv("raw_data/LEAP_Knee.csv", stringsAsFactors=FALSE)
+LEAP_BL <- read.csv("raw_data/LEAP_BL_20160415.csv", stringsAsFactors=FALSE)
+LEAP_3m <- read.csv("raw_data/LEAP_3m_20160415.csv", stringsAsFactors=FALSE)
+

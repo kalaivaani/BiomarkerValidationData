@@ -29,6 +29,37 @@ biomarkers <- subset(biomarkers, biomarkers$ID %in% BioMaster$Study.ID)
 BioMaster[BioMaster == "" | BioMaster=="NA" | BioMaster=="?"| BioMaster=="Pending"] <- NA
 biomarkers <- merge(biomarkers, BioMaster[,c("Study.ID", "LEAP.ID")], by.x="ID", by.y="Study.ID", all.x=TRUE, all.y=FALSE)
 
-# select BL and 3m data from LEAP
-LEAP_BL <- LEAPKnee[,c(grep("SUBJECT_ID", names(LEAPKnee)),grep("BASELINE_", names(LEAPKnee)))]
-LEAP_3m <- LEAPKnee[,c(grep("SUBJECT_ID", names(LEAPKnee)),grep("X3MONTH_", names(LEAPKnee)))]
+# convert date variables in LEAP
+LEAP_BL[,grep("DOB$|DOE$|DOC$", names(LEAP_BL))] <- lapply(LEAP_BL[,grep("DOB$|DOE$|DOC$", names(LEAP_BL))], ymd)
+LEAP_3m[,grep("DOB$|DOE$|DOC$", names(LEAP_3m))] <- lapply(LEAP_3m[,grep("DOB$|DOE$|DOC$", names(LEAP_3m))], ymd)
+
+# remove prefixes from LEAP data
+LEAP_BL <- remove_prefixes(LEAP_BL)
+LEAP_3m <- remove_prefixes(LEAP_3m)
+
+#### LEAP BL calculations ####
+# calculate baseline age
+LEAP_BL$BASELINE_AGE <- interval(LEAP_BL$DOB, LEAP_BL$DOE)/years(1)
+LEAP_BL$BASELINE_AGE[LEAP_BL$BASELINE_AGE>100 | LEAP_BL$BASELINE_AGE < 16] <- NA
+
+# calculate height, weight, BMI
+HWBMI <- calc_BMI(LEAP_BL[grep("INPUT", names(LEAP_BL))])
+colnames(HWBMI) <- paste0("BASELINE_", colnames(HWBMI))
+
+# calculate BL WOMAC
+BL_WOMAC <- WOMACscoring(LEAP_BL[,grep("KOOS", names(LEAP_BL))])
+colnames(BL_WOMAC) <- paste0("BASELINE_", colnames(BL_WOMAC))
+
+LEAP_BL <- cbind(LEAP_BL, HWBMI, BL_WOMAC)
+
+#### LEAP 3m calculations #####
+# calculate 3m WOMAC
+x3m_WOMAC <- WOMACscoring(LEAP_3m[,grep("KOOS", names(LEAP_3m))])
+colnames(x3m_WOMAC) <- paste0("3MONTH_", colnames(x3m_WOMAC))
+
+LEAP_3m <- cbind(LEAP_3m, x3m_WOMAC)
+
+
+##### LEAP BL dataset ######
+# subject ID, age, sex, baseline DOC (expectation), BASELINE_ETHNIC --> BASELINE_EMPLOYMENT_OTHER
+BLdata <- LEAP_BL[,c("SUBJECT_ID")]
