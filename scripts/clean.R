@@ -62,7 +62,8 @@ LEAP_3m <- cbind(LEAP_3m, x3m_WOMAC)
 
 ######################## LEAP BL dataset #######################################
 # subject ID, age, sex, baseline DOC (expectation), BASELINE_ETHNIC --> BASELINE_EMPLOYMENT_OTHER
-BLdata <- LEAP_BL[c("SUBJECT_ID", "GENDER", "BASELINE_AGE","BASELINE_EXPECTATIONDOC")]
+BLdata <- LEAP_BL[c("SUBJECT_ID", "DOE", "GENDER", "BASELINE_AGE","BASELINE_EXPECTATIONDOC")]
+names(BLdata)[names(BLdata)=="DOE"] <- "DOS"
 names(BLdata)[names(BLdata)=="BASELINE_EXPECTATIONDOC"] <- "BASELINE_DOC"
 
 # add demographics
@@ -117,5 +118,70 @@ LEAPdata <- merge(BLdata, x3mdata, by="SUBJECT_ID", all=T)
 
 ########################### merge biomarker and LEAP data ##################################
 biomarkers <- merge(biomarkers, LEAPdata, by.x="LEAP.ID", by.y="SUBJECT_ID", all.x=TRUE, all.y=FALSE)
+
+
+
+########################## get BL and 3m data from biobank dataset ################################
+Bio_BL[Bio_BL == "." |Bio_BL == "" | Bio_BL == " " | Bio_BL == "NA"] <- NA
+Bio_BL[,c(which(names(Bio_BL)=="C18"):length(Bio_BL))] <- lapply(Bio_BL[,c(which(names(Bio_BL)=="C18"):length(Bio_BL))], function(x) as.numeric(as.character(x)))
+
+Bio_3m[Bio_3m == "." |Bio_3m == "" | Bio_3m == " " | Bio_3m == "NA"] <- NA
+Bio_3m[,c(7:55,57:118,119:194)] <- lapply(Bio_3m[,c(7:55,57:118,119:194)], function(x) as.numeric(as.character(x)))
+
+# baseline: DOS (from master), gender, age, ethnicity, country, height, weight, BMI, education, marital status, living arrangement, 
+  # employment?, CHA, sf scores (calculate), WOMAC scores (calculate), expectations, PCS scores (calculate)
+
+# score SF-36
+Bio_BL_SF36 <- score_sf36(Bio_BL[,c(1, grep("SF", names(Bio_BL)))], 1)
+names(Bio_BL_SF36)[2:9] <- paste0("BASELINE_SF36",names(Bio_BL_SF36)[2:9]) 
+  
+Bio_3m_SF36 <- score_sf36(Bio_3m[,c(1, grep("SF", names(Bio_3m)))], 1)
+names(Bio_3m_SF36)[2:9] <- paste0("BASELINE_SF36",names(Bio_3m_SF36)[2:9]) 
+
+
+# score WOMAC
+names(Bio_BL) <- sub("^X0WOMAC([1-5])$", "WOMAC_P\\1")
+
+# score PCS
+
+
+# BB_BL <- BioMaster[,c("Study.ID", "LEAP.ID", "MRN", "Surgery.Date")]
+# BB_BL[,c("Surgery.Date", "Baseline.Date")] <- lapply(BB_BL[,c("Surgery.Date", "Baseline.Date")], dmy)
+# names(BB_BL) <- c("ID", "LEAP.ID", "MRN", "DOS", "BASELINE_DOC")
+# 
+# # demographics and CHA
+# BB_BL <- merge(BB_BL, Bio_BL[,c(1, 7:70)], by.x="ID", by.y="Study.ID", all.x=T, all.y=F)
+# BB_BL$Language <- BB_BL$C17 <- NULL
+# names(BB_BL)[6:19] <- c("GENDER", "BASELINE_AGE", "BASELINE_ETHNIC", "BASELINE_COUNTRY",
+#                         "BASELINE_HEIGHT", "BASELINE_WEIGHT","BASELINE_BMI", "BASELINE_WAIST", "BASELINE_HIP",
+#                         "BASELINE_SCHOOL", "BASELINE_LIVING", "BASELINE_MARITAL", "BASELINE_EMPLOYMENT")
+# 
+# 
+# names(BB_BL) <- sub("^C(.+)(A|B|C)$", "BASELINE_CHA\\1\\2", names(BB_BL))
+# names(BB_BL)[names(BB_BL)=="C18"] <- "BASELINE_SMOKING"
+# 
+# #baseline sf-36
+# Bio_BL <- score_sf36(Bio_BL)
+# 
+# # 3 month: SF scores (calculate), WOMAC scores (calculate), satisfaction
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 write.csv(biomarkers, file="processed_data/biomarkers_LEAP.csv", row.names=F, na="")
